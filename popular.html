@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hafizi Quran Style</title>
+    <!-- ফন্ট -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Amiri:wght@400;700&family=Scheherazade+New:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+    /* --- গ্লোবাল --- */
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+    body { background-color: #f0f2f5; display: flex; justify-content: center; height: 100vh; overflow: hidden; }
+
+    /* অ্যাপ কন্টেইনার */
+    .app-container {
+        width: 100%; max-width: 420px; height: 100%; background: #fff;
+        position: relative; display: flex; flex-direction: column;
+        box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    }
+
+    /* হেডার */
+    .header {
+        background-color: #2e7d32; color: white; padding: 15px 20px; 
+        display: flex; align-items: center; gap: 10px; height: 60px; z-index: 10;
+    }
+    .search-box {
+        flex: 1; background: rgba(255,255,255,0.2); border-radius: 20px; 
+        padding: 5px 15px; display: flex; align-items: center;
+    }
+    .search-box input {
+        background: transparent; border: none; outline: none; color: white; 
+        width: 100%; margin-left: 10px; font-size: 0.9rem;
+    }
+    .search-box input::placeholder { color: rgba(255,255,255,0.8); }
+
+    /* সূরা তালিকা */
+    .surah-list { flex: 1; overflow-y: auto; background: #fff; padding-bottom: 70px; }
+
+    .surah-item {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 15px 20px; border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .eng-name { font-size: 0.95rem; font-weight: 600; color: #d4a017; }
+    .eng-name span { color: #333; margin-left: 5px; }
+    .arabic-name { font-family: 'Amiri', serif; font-size: 0.9rem; color: #666; margin-top: 2px; }
+
+    .btn {
+        padding: 6px 14px; border-radius: 20px; font-size: 0.7rem; font-weight: 600;
+        text-transform: uppercase; cursor: pointer; background: transparent; margin-left: 5px;
+    }
+    .btn-play { border: 2px solid #2e7d32; color: #2e7d32; }
+    .btn-read { border: 2px solid #d4a017; color: #d4a017; }
+
+    /* --- হাফেজী স্টাইল রিডিং ভিউ --- */
+    .reader-modal {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        background: white; z-index: 100; transform: translateY(100%); transition: 0.3s;
+        display: flex; flex-direction: column;
+    }
+    .reader-modal.show { transform: translateY(0); }
+    
+    .modal-header {
+        background: white; color: black; padding: 10px; 
+        display: flex; align-items: center; justify-content: space-between;
+        border-bottom: 2px solid #2e7d32;
+    }
+
+    /* মেইন পড়ার এরিয়া */
+    .modal-body {
+        flex: 1; overflow-y: auto; padding: 10px; 
+        background: #fff; /* সাদা কাগজ */
+    }
+    
+    /* হাফেজী ফ্রেম ডিজাইন (ছবির মতো বর্ডার) */
+    .hafizi-frame {
+        border: 2px solid black;
+        padding: 3px;
+        height: auto;
+        min-height: 90%;
+        margin: 5px;
+        position: relative;
+    }
+
+    .hafizi-inner-border {
+        border: 1px solid black;
+        padding: 10px;
+        height: 100%;
+        /* ডেকোরেটিভ কর্নার */
+        background-image: radial-gradient(circle at top left, transparent 10px, #fff 11px), 
+                          radial-gradient(circle at top right, transparent 10px, #fff 11px),
+                          radial-gradient(circle at bottom left, transparent 10px, #fff 11px),
+                          radial-gradient(circle at bottom right, transparent 10px, #fff 11px);
+    }
+
+    /* টেক্সট স্টাইল (ছবির মতো) */
+    .quran-text-block {
+        font-family: 'Scheherazade New', serif; /* হাফেজী ফন্ট */
+        font-size: 26px; /* বড় ফন্ট */
+        line-height: 1.8; /* লাইনের মাঝখানে গ্যাপ কম */
+        color: #000;
+        direction: rtl;
+        text-align: justify; /* দুই পাশে সমান */
+        font-weight: 700; /* বোল্ড */
+        word-spacing: 2px;
+    }
+    
+    /* আয়াত নম্বর */
+    .ayah-symbol { 
+        font-size: 0.8em; margin: 0 3px; display: inline-block;
+        border: 1px solid black; border-radius: 50%; padding: 0 4px;
+        font-weight: normal; font-size: 18px;
+    }
+
+    /* অডিও প্লেয়ার */
+    .audio-player-bar {
+        position: absolute; bottom: 0; left: 0; width: 100%;
+        background: #222; color: white; padding: 10px; display: flex; align-items: center; gap: 10px;
+        transform: translateY(100%); transition: 0.3s; z-index: 50;
+    }
+    .audio-player-bar.show { transform: translateY(0); }
+    audio { width: 100%; height: 35px; }
+
+    .loader { text-align: center; margin-top: 50px; display: none; }
+
+</style>
+</head>
+<body>
+
+<div class="app-container">
+
+<!-- হেডার -->
+<div class="header">
+    <div class="search-box">
+        <i class="fas fa-search"></i>
+        <input type="text" id="searchInput" placeholder="Search Surah...">
+    </div>
+</div>
+
+<!-- লিস্ট -->
+<div id="mainLoader" class="loader"><i class="fas fa-circle-notch fa-spin"></i></div>
+<div class="surah-list" id="surahList"></div>
+
+<!-- অডিও -->
+<div class="audio-player-bar" id="audioBar">
+    <div style="font-size: 0.8rem; width: 80px;" id="audioTitle">Playing</div>
+    <audio id="mainAudio" controls controlsList="nodownload"></audio>
+    <i class="fas fa-times" onclick="closeAudio()" style="cursor:pointer; padding:5px; color:#fff;"></i>
+</div>
+
+<!-- রিডার ভিউ -->
+<div class="reader-modal" id="readerModal">
+    <div class="modal-header">
+        <i class="fas fa-arrow-left" onclick="closeReader()" style="cursor:pointer; font-size: 1.2rem;"></i>
+        <span id="readerTitle" style="font-weight: 600;">AL-QURAN</span>
+        <i class="fas fa-moon" style="font-size: 1.2rem;"></i>
+    </div>
+    
+    <div class="modal-body">
+        <div id="readerLoader" class="loader"><i class="fas fa-spinner fa-spin"></i></div>
+        
+        <!-- ফ্রেম শুরু -->
+        <div class="hafizi-frame">
+            <div class="hafizi-inner-border">
+                <div id="readerContent"></div>
+            </div>
+        </div>
+        <!-- ফ্রেম শেষ -->
+
+    </div>
+</div>
+</div>
+
+<script>
+    // APIs
+    const API_LIST = "https://api.alquran.cloud/v1/surah";
+    const API_TEXT = "https://api.alquran.cloud/v1/surah/{num}/quran-indopak"; // IndoPak = হাফেজী স্টাইল
+    const AUDIO_BASE = "https://server8.mp3quran.net/afs/";
+
+    const surahListContainer = document.getElementById('surahList');
+    const mainLoader = document.getElementById('mainLoader');
+    const searchInput = document.getElementById('searchInput');
+    const audioBar = document.getElementById('audioBar');
+    const mainAudio = document.getElementById('mainAudio');
+    const audioTitle = document.getElementById('audioTitle');
+    const readerModal = document.getElementById('readerModal');
+    const readerTitle = document.getElementById('readerTitle');
+    const readerContent = document.getElementById('readerContent');
+    const readerLoader = document.getElementById('readerLoader');
+
+    let allSurahs = [];
+
+    // ১. লোড লিস্ট
+    window.onload = async () => {
+        mainLoader.style.display = 'block';
+        try {
+            const res = await fetch(API_LIST);
+            const data = await res.json();
+            allSurahs = data.data;
+            renderList(allSurahs);
+        } catch (e) {
+            surahListContainer.innerHTML = "<p style='text-align:center; padding:20px;'>No Internet</p>";
+        } finally {
+            mainLoader.style.display = 'none';
+        }
+    };
+
+    function renderList(list) {
+        surahListContainer.innerHTML = '';
+        list.forEach(s => {
+            const div = document.createElement('div');
+            div.className = 'surah-item';
+            div.innerHTML = `
+                <div style="flex:1;">
+                    <div class="eng-name">${s.number}. <span>${s.englishName}</span></div>
+                    <div class="arabic-name">${s.name}</div>
+                </div>
+                <div>
+                    <button class="btn btn-play" onclick="playSurah(${s.number}, '${s.englishName}')">PLAY</button>
+                    <button class="btn btn-read" onclick="readSurah(${s.number}, '${s.englishName}')">READ</button>
+                </div>
+            `;
+            surahListContainer.appendChild(div);
+        });
+    }
+
+    // ২. অডিও প্লে
+    function playSurah(num, name) {
+        const url = `${AUDIO_BASE}${num.toString().padStart(3, '0')}.mp3`;
+        audioBar.classList.add('show');
+        audioTitle.innerText = name;
+        mainAudio.src = url;
+        mainAudio.play();
+    }
+    function closeAudio() {
+        mainAudio.pause();
+        audioBar.classList.remove('show');
+    }
+
+    // ৩. রিড (বিসমিল্লাহ রিমুভ করা হয়েছে)
+    async function readSurah(num, name) {
+        readerModal.classList.add('show');
+        readerTitle.innerText = name.toUpperCase();
+        readerContent.innerHTML = '';
+        readerLoader.style.display = 'block';
+
+        try {
+            const res = await fetch(API_TEXT.replace('{num}', num));
+            const data = await res.json();
+
+            let fullText = "";
+
+            // বিসমিল্লাহ হেডার এখানে আর নেই
+
+            data.data.ayahs.forEach(ayah => {
+                let text = ayah.text;
+                
+                // ১ নম্বর সূরা (ফাতিহা) ছাড়া বাকি সব সূরার শুরুর বিসমিল্লাহ মুছে ফেলা হবে
+                if(num !== 1) {
+                    text = text.replace("بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ", "").trim();
+                }
+                
+                // আরবি নাম্বার
+                let arNum = ayah.numberInSurah.toString().replace(/\d/g, d => "٠١٢٣٤٥٦٧٨٩"[d]);
+
+                fullText += `${text} <span class="ayah-symbol">${arNum}</span> `;
+            });
+
+            // HTML আউটপুট
+            readerContent.innerHTML = `
+                <div class="quran-text-block">
+                    ${fullText}
+                </div>
+            `;
+
+        } catch (e) {
+            readerContent.innerHTML = "Error loading text.";
+        } finally {
+            readerLoader.style.display = 'none';
+        }
+    }
+
+    function closeReader() {
+        readerModal.classList.remove('show');
+    }
+
+    // সার্চ
+    searchInput.addEventListener('input', (e) => {
+        const val = e.target.value.toLowerCase();
+        renderList(allSurahs.filter(s => s.englishName.toLowerCase().includes(val)));
+    });
+
+</script>
+
+</body>
+</html>
